@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tai.workflow.repository.mapper.WorkflowDefinitionMapper">
+
+    <resultMap id="BaseResultMap" type="com.tai.workflow.repository.entity.WorkflowDefinitionEntity">
+        <id column="id" property="id"/>
+        <result column="createTime" property="createTime"/>
+        <result column="updateTime" property="updateTime"/>
+        <result column="namespace" property="namespace"/>
+        <result column="name" property="name"/>
+        <result column="display_name" property="displayName"/>
+        <result column="description" property="description"/>
+        <result column="worker_node" property="workerNode"/>
+        <result column="variables" property="variables"/>
+        <result column="dag" property="dag"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, db_create_time as createTime, db_modify_time as updateTime, namespace, name, display_name, description, worker_node, variables, dag
+    </sql>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM workflow_definition
+        WHERE id = #{id}
+    </select>
+
+    <select id="selectTopByNamespaceAndNameAndWorkerNode" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM workflow_definition
+        WHERE namespace = #{namespace} AND name = #{name} AND worker_node = #{workerNode}
+        ORDER BY db_create_time DESC
+        LIMIT 1
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO workflow_definition (namespace, name, display_name, description, worker_node, variables, dag, db_create_time)
+        VALUES (#{namespace}, #{name}, #{displayName}, #{description}, #{workerNode}, #{variables}, #{dag}, #{createTime})
+    </insert>
+
+    <update id="update">
+        UPDATE workflow_definition
+        SET display_name = #{displayName},
+            description = #{description},
+            variables = #{variables},
+            dag = #{dag}
+        WHERE id = #{id}
+    </update>
+
+</mapper>

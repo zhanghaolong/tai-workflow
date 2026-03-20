@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tai.workflow.repository.mapper.WorkflowInstanceMapper">
+
+    <resultMap id="BaseResultMap" type="com.tai.workflow.repository.entity.WorkflowInstanceEntity">
+        <id column="id" property="id"/>
+        <result column="token" property="token"/>
+        <result column="createTime" property="createTime"/>
+        <result column="updateTime" property="updateTime"/>
+        <result column="workflow_definition_id" property="workflowDefinitionId"/>
+        <result column="namespace" property="namespace"/>
+        <result column="name" property="name"/>
+        <result column="display_name" property="displayName"/>
+        <result column="state" property="state"/>
+        <result column="start_time" property="startTime"/>
+        <result column="end_time" property="endTime"/>
+        <result column="parent_id" property="parentId"/>
+        <result column="parent_activity_id" property="parentActivityId"/>
+        <result column="context" property="context"/>
+        <result column="definition_variables" property="definitionVariables"/>
+        <result column="worker_node" property="workerNode"/>
+        <result column="version" property="version"/>
+        <result column="biz_id" property="bizId"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, token, db_create_time as createTime, db_modify_time as updateTime, workflow_definition_id, namespace, name, display_name,
+        state, start_time, end_time, parent_id, parent_activity_id, context, definition_variables, worker_node, version, biz_id
+    </sql>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM workflow_instance
+        WHERE id = #{id}
+    </select>
+
+    <select id="selectByNamespaceAndToken" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM workflow_instance
+        WHERE namespace = #{namespace} AND token = #{token}
+    </select>
+
+    <select id="selectByParentIdAndParentActivityId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM workflow_instance
+        WHERE parent_id = #{parentId} AND parent_activity_id = #{parentActivityId}
+    </select>
+
+    <select id="selectByParentId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM workflow_instance
+        WHERE parent_id = #{parentId}
+    </select>
+
+    <select id="selectByNameAndStateAndEndTimeBetween" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM workflow_instance
+        WHERE name = #{name} AND state = #{state} AND end_time BETWEEN #{fromTime} AND #{toTime}
+    </select>
+
+    <select id="selectByNamespaceAndStartTimeGreaterThanAndWorkerNodeNotInAndStateIn" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM workflow_instance
+        WHERE namespace = #{namespace}
+          AND start_time > #{fromTime}
+          AND worker_node NOT IN
+            <foreach collection="workerNodeList" item="node" open="(" separator="," close=")">
+                #{node}
+            </foreach>
+          AND state IN
+            <foreach collection="states" item="state" open="(" separator="," close=")">
+                #{state}
+            </foreach>
+    </select>
+
+    <select id="selectByNamespaceAndStartTimeGreaterThanAndStateInAndDefinitionVariablesLike" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM workflow_instance
+        WHERE namespace = #{namespace}
+          AND start_time > #{startTime}
+          AND state IN
+            <foreach collection="states" item="state" open="(" separator="," close=")">
+                #{state}
+            </foreach>
+          AND definition_variables LIKE #{definitionVariables}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO workflow_instance (token, workflow_definition_id, namespace, name, display_name,
+            state, start_time, end_time, parent_id, parent_activity_id, context, definition_variables, worker_node, version, biz_id, db_create_time)
+        VALUES (#{token}, #{workflowDefinitionId}, #{namespace}, #{name}, #{displayName}, #{state},
+        #{startTime}, #{endTime}, #{parentId}, #{parentActivityId}, #{context}, #{definitionVariables},
+        #{workerNode}, #{version}, #{bizId}, #{createTime})
+    </insert>
+
+    <update id="updateWorkflowInstance">
+        UPDATE workflow_instance
+        SET state = CASE WHEN #{state} IS NULL THEN state ELSE #{state} END,
+            end_time = CASE WHEN #{endTime} IS NULL THEN end_time ELSE #{endTime} END,
+            context = CASE WHEN #{context} IS NULL THEN context ELSE #{context} END
+            <if test="bizId != null and bizId != ''">
+            , biz_id = #{bizId}
+            </if>
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateWorkflowInstanceWithOptimisticLock">
+        UPDATE workflow_instance
+        SET state = CASE WHEN #{state} IS NULL THEN state ELSE #{state} END,
+            end_time = CASE WHEN #{endTime} IS NULL THEN end_time ELSE #{endTime} END,
+            context = CASE WHEN #{context} IS NULL THEN context ELSE #{context} END,
+            version = version + 1
+            <if test="bizId != null and bizId != ''">
+            , biz_id = #{bizId}
+            </if>
+        WHERE id = #{id} AND version = #{version}
+    </update>
+
+    <select id="selectWorkflowInstances" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM workflow_instance
+        ORDER BY id
+        <choose>
+            <when test="idOrder != null and idOrder.name() == 'ASC'">
+                ASC
+            </when>
+            <otherwise>
+                DESC
+            </otherwise>
+        </choose>
+        <if test="nextToken != null and maxResults != null">
+            LIMIT #{nextToken}, #{maxResults}
+        </if>
+        <if test="nextToken == null and maxResults != null">
+            LIMIT #{maxResults}
+        </if>
+    </select>
+
+    <select id="countByNamespace" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM workflow_instance
+        WHERE namespace = #{namespace}
+    </select>
+
+</mapper>

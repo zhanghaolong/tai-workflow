@@ -1,0 +1,56 @@
+tai:
+  workflow:
+    namespace: test
+    fail-over-schedule-task-seconds: 2
+
+web3:
+  workflow:
+    namespace: test
+    fail-over-schedule-task-seconds: 2
+
+workflow:
+  mybatis:
+    enable: true
+
+mybatis-plus:
+  mapper-locations: classpath*:com/tai/workflow/repository/mapper/*.xml
+
+spring:
+  datasource:
+    url: jdbc:h2:mem:workflow;DB_CLOSE_ON_EXIT=FALSE;mode=MySQL
+    username: root
+    password: root
+    driver-class-name: org.h2.Driver
+    hikari:
+      maximum-pool-size: 30
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    show-sql: true
+    generate-ddl: false
+    properties:
+      hibernate:
+        order_by:
+          default_null_ordering: first
+      org.hibernate.envers:
+        audit_strategy: org.hibernate.envers.strategy.internal.DefaultAuditStrategy
+        audit_table_suffix: _history
+        store_data_at_delete: true
+        revision_field_name: revision
+        revision_type_field_name: revision_type
+    hibernate:
+      ddl-auto: none
+  jackson:
+    serialization:
+      FAIL_ON_EMPTY_BEANS: false
+  messages:
+    basename: i18n/messages
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.integration.IntegrationAutoConfiguration
+  data:
+    jpa:
+      repositories:
+        enabled: true
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema-h2.sql

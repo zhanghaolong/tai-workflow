@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tai.workflow.repository.mapper.WorkflowNodeLeaderMapper">
+
+    <resultMap id="BaseResultMap" type="com.tai.workflow.repository.entity.WorkflowNodeLeaderEntity">
+        <id column="id" property="id"/>
+        <result column="namespace" property="namespace"/>
+        <result column="leader_node" property="leaderNode"/>
+        <result column="refresh_time" property="refreshTime"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, namespace, leader_node, refresh_time
+    </sql>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM workflow_node_leader
+        WHERE id = #{id}
+    </select>
+
+    <select id="selectByNamespace" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM workflow_node_leader
+        WHERE namespace = #{namespace}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO workflow_node_leader (namespace, leader_node, refresh_time)
+        VALUES (#{namespace}, #{leaderNode}, #{refreshTime})
+    </insert>
+
+    <update id="updateLeaderRefreshTime">
+        UPDATE workflow_node_leader
+        SET refresh_time = #{refreshTime}
+        WHERE namespace = #{namespace} AND leader_node = #{leaderNode}
+    </update>
+
+    <delete id="deleteByNamespaceAndRefreshTimeLessThan">
+        DELETE FROM workflow_node_leader
+        WHERE namespace = #{namespace} AND refresh_time &lt; #{timeThreshold}
+    </delete>
+
+</mapper>

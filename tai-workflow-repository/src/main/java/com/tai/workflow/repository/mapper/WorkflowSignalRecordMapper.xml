@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tai.workflow.repository.mapper.WorkflowSignalRecordMapper">
+
+    <resultMap id="BaseResultMap" type="com.tai.workflow.repository.entity.WorkflowSignalRecordEntity">
+        <id column="id" property="id"/>
+        <result column="workflow_instance_id" property="workflowInstanceId"/>
+        <result column="signal_biz_code" property="signalBizCode"/>
+        <result column="signal_time" property="signalTime"/>
+        <result column="createTime" property="createTime"/>
+        <result column="updateTime" property="updateTime"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, workflow_instance_id, signal_biz_code, signal_time, db_create_time as createTime, db_modify_time as updateTime
+    </sql>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM workflow_signal_record
+        WHERE id = #{id}
+    </select>
+
+    <select id="selectByWorkflowInstanceIdAndSignalBizCode" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM workflow_signal_record
+        WHERE workflow_instance_id = #{workflowInstanceId} AND signal_biz_code = #{signalBizCode}
+    </select>
+
+    <select id="existsByWorkflowInstanceIdAndSignalBizCode" resultType="int">
+        SELECT COUNT(*)
+        FROM workflow_signal_record
+        WHERE workflow_instance_id = #{workflowInstanceId} AND signal_biz_code = #{signalBizCode}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO workflow_signal_record (workflow_instance_id, signal_biz_code, signal_time, db_create_time)
+        VALUES (#{workflowInstanceId}, #{signalBizCode}, #{signalTime}, #{createTime})
+    </insert>
+
+    <update id="updateSignalTime">
+        UPDATE workflow_signal_record
+        SET signal_time = #{signalTime}
+        WHERE id = #{id}
+    </update>
+
+    <insert id="upsert">
+        INSERT INTO workflow_signal_record (workflow_instance_id, signal_biz_code, signal_time)
+        VALUES (#{workflowInstanceId}, #{signalBizCode}, #{signalTime})
+        ON DUPLICATE KEY UPDATE signal_time = #{signalTime}
+    </insert>
+
+    <delete id="deleteByWorkflowInstanceId">
+        DELETE FROM workflow_signal_record
+        WHERE workflow_instance_id = #{workflowInstanceId}
+    </delete>
+
+    <delete id="deleteByWorkflowInstanceIdAndSignalBizCode">
+        DELETE FROM workflow_signal_record
+        WHERE workflow_instance_id = #{workflowInstanceId} AND signal_biz_code = #{signalBizCode}
+    </delete>
+
+</mapper>

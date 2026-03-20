@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tai.workflow.repository.mapper.ActivityInstanceMapper">
+
+    <resultMap id="BaseResultMap" type="com.tai.workflow.repository.entity.ActivityInstanceEntity">
+        <id column="id" property="id"/>
+        <result column="createTime" property="createTime"/>
+        <result column="updateTime" property="updateTime"/>
+        <result column="workflow_instance_id" property="workflowInstanceId"/>
+        <result column="namespace" property="namespace"/>
+        <result column="name" property="name"/>
+        <result column="display_name" property="displayName"/>
+        <result column="state" property="state"/>
+        <result column="prev_state" property="prevState"/>
+        <result column="execution_msg" property="executionMsg"/>
+        <result column="prev_execution_msg" property="prevExecutionMsg"/>
+        <result column="first_start_time" property="firstStartTime"/>
+        <result column="start_time" property="startTime"/>
+        <result column="end_time" property="endTime"/>
+        <result column="timeout_time" property="timeoutTime"/>
+        <result column="retry_count" property="retryCount"/>
+        <result column="input_context" property="inputContext"/>
+        <result column="output_context" property="outputContext"/>
+        <result column="signal_biz_code" property="signalBizCode"/>
+    </resultMap>
+
+    <resultMap id="SimpleResultMap" type="com.tai.workflow.repository.entity.ActivityInstanceSimpleEntity">
+        <id column="id" property="id"/>
+        <result column="createTime" property="createTime"/>
+        <result column="updateTime" property="updateTime"/>
+        <result column="workflow_instance_id" property="workflowInstanceId"/>
+        <result column="namespace" property="namespace"/>
+        <result column="name" property="name"/>
+        <result column="display_name" property="displayName"/>
+        <result column="state" property="state"/>
+        <result column="prev_state" property="prevState"/>
+        <result column="first_start_time" property="firstStartTime"/>
+        <result column="start_time" property="startTime"/>
+        <result column="end_time" property="endTime"/>
+        <result column="timeout_time" property="timeoutTime"/>
+        <result column="retry_count" property="retryCount"/>
+        <result column="signal_biz_code" property="signalBizCode"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, db_create_time as createTime, db_modify_time as updateTime, workflow_instance_id, namespace, name, display_name, state, prev_state,
+        execution_msg, prev_execution_msg, first_start_time, start_time, end_time, timeout_time, retry_count,
+        input_context, output_context, signal_biz_code
+    </sql>
+
+    <sql id="Simple_Column_List">
+        id, db_create_time as createTime, db_modify_time as updateTime, workflow_instance_id, namespace, name, display_name, state, prev_state,
+        first_start_time, start_time, end_time, timeout_time, retry_count, signal_biz_code
+    </sql>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM activity_instance
+        WHERE id = #{id}
+    </select>
+
+    <select id="selectByWorkflowInstanceIdAndName" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM activity_instance
+        WHERE workflow_instance_id = #{workflowInstanceId} AND name = #{name}
+    </select>
+
+    <select id="selectByWorkflowInstanceId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM activity_instance
+        WHERE workflow_instance_id = #{workflowInstanceId}
+    </select>
+
+    <select id="selectBriefByWorkflowInstanceId" resultType="com.tai.workflow.repository.entity.ActivityInstanceSimpleEntity">
+        SELECT id, workflow_instance_id as workflowInstanceId, name, state, signal_biz_code as signalBizCode
+        FROM activity_instance
+        WHERE workflow_instance_id = #{workflowInstanceId}
+    </select>
+
+    <select id="selectByWorkflowInstanceIdAndSignalBizCodeIn" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM activity_instance
+        WHERE workflow_instance_id = #{workflowInstanceId}
+          AND signal_biz_code IN
+            <foreach collection="signalBizCodes" item="code" open="(" separator="," close=")">
+                #{code}
+            </foreach>
+    </select>
+
+    <select id="countByWorkflowInstanceIdAndStateNotIn" resultType="int">
+        SELECT COUNT(*)
+        FROM activity_instance
+        WHERE workflow_instance_id = #{workflowInstanceId}
+          AND state NOT IN
+            <foreach collection="states" item="state" open="(" separator="," close=")">
+                #{state}
+            </foreach>
+    </select>
+
+    <select id="countByWorkflowInstanceIdAndNameInAndStateNotIn" resultType="int">
+        SELECT COUNT(*)
+        FROM activity_instance
+        WHERE workflow_instance_id = #{workflowInstanceId}
+          AND name IN
+            <foreach collection="names" item="name" open="(" separator="," close=")">
+                #{name}
+            </foreach>
+          AND state NOT IN
+            <foreach collection="states" item="state" open="(" separator="," close=")">
+                #{state}
+            </foreach>
+    </select>
+
+    <select id="selectByNamespaceAndTimeoutTimeBetweenAndStateIn" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM activity_instance
+        WHERE namespace = #{namespace}
+          AND timeout_time BETWEEN #{fromTime} AND #{toTime}
+          AND state IN
+            <foreach collection="states" item="state" open="(" separator="," close=")">
+                #{state}
+            </foreach>
+    </select>
+
+    <select id="selectPageByCondition" resultMap="SimpleResultMap">
+        SELECT <include refid="Simple_Column_List"/>
+        FROM activity_instance
+        <where>
+            <if test="operationId != null">
+                AND id = #{operationId}
+            </if>
+            <if test="operationName != null and operationName != ''">
+                AND name LIKE CONCAT('%', #{operationName}, '%')
+            </if>
+            <if test="createTimeBefore != null">
+                AND db_create_time &lt;= #{createTimeBefore}
+            </if>
+            <if test="createTimeAfter != null">
+                AND db_create_time &gt;= #{createTimeAfter}
+            </if>
+            <if test="activityStates != null and activityStates.size() > 0">
+                AND state IN
+                <foreach collection="activityStates" item="state" open="(" separator="," close=")">
+                    #{state}
+                </foreach>
+            </if>
+            <if test="workflowInstanceIds != null and workflowInstanceIds.size() > 0">
+                AND workflow_instance_id IN
+                <foreach collection="workflowInstanceIds" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+        </where>
+        <if test="startTimeOrder != null">
+            ORDER BY start_time ${startTimeOrder}
+        </if>
+        <if test="endTimeOrder != null">
+            <if test="startTimeOrder != null">,</if>
+            <if test="startTimeOrder == null">ORDER BY</if>
+            end_time ${endTimeOrder}
+        </if>
+        LIMIT #{maxResults} OFFSET #{nextToken}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO activity_instance (workflow_instance_id, namespace, name, display_name, state,
+            prev_state, execution_msg, prev_execution_msg, first_start_time, start_time, end_time, timeout_time, retry_count,
+            input_context, output_context, signal_biz_code, db_create_time)
+        VALUES (#{workflowInstanceId}, #{namespace}, #{name}, #{displayName}, #{state},
+            #{prevState}, #{executionMsg}, #{prevExecutionMsg}, #{firstStartTime}, #{startTime}, #{endTime}, #{timeoutTime}, #{retryCount},
+            #{inputContext}, #{outputContext}, #{signalBizCode}, #{createTime})
+    </insert>
+
+    <update id="updateActivityInstanceById">
+        UPDATE activity_instance
+        SET prev_state = CASE WHEN #{expectedActivityState} IS NULL THEN prev_state ELSE state END,
+            state = CASE WHEN #{expectedActivityState} IS NULL THEN state ELSE #{expectedActivityState} END,
+            first_start_time = CASE WHEN #{firstStartTime} IS NULL THEN first_start_time ELSE #{firstStartTime} END,
+            start_time = CASE WHEN #{startTime} IS NULL THEN start_time ELSE #{startTime} END,
+            end_time = CASE WHEN #{endTime} IS NULL THEN end_time ELSE #{endTime} END,
+            timeout_time = CASE WHEN #{timeoutTime} IS NULL THEN timeout_time ELSE #{timeoutTime} END,
+            input_context = CASE WHEN #{inputContext} IS NULL THEN input_context ELSE #{inputContext} END,
+            output_context = CASE WHEN #{outputContext} IS NULL THEN output_context ELSE #{outputContext} END,
+            prev_execution_msg = CASE WHEN execution_msg IS NULL OR prev_execution_msg = execution_msg THEN prev_execution_msg ELSE execution_msg END,
+            execution_msg = CASE WHEN #{executionMsg} IS NULL THEN execution_msg ELSE #{executionMsg} END,
+            signal_biz_code = CASE WHEN #{signalBizCode} IS NULL THEN signal_biz_code ELSE #{signalBizCode} END,
+            retry_count = CASE WHEN #{retryCount} IS NULL THEN retry_count ELSE #{retryCount} END
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateActivityInstanceByIdAndState">
+        UPDATE activity_instance
+        SET prev_state = CASE WHEN #{expectedActivityState} IS NULL THEN prev_state ELSE state END,
+            state = CASE WHEN #{expectedActivityState} IS NULL THEN state ELSE #{expectedActivityState} END,
+            first_start_time = CASE WHEN #{firstStartTime} IS NULL THEN first_start_time ELSE #{firstStartTime} END,
+            start_time = CASE WHEN #{startTime} IS NULL THEN start_time ELSE #{startTime} END,
+            end_time = #{endTime},
+            timeout_time = CASE WHEN #{timeoutTime} IS NULL THEN timeout_time ELSE #{timeoutTime} END,
+            input_context = CASE WHEN #{inputContext} IS NULL THEN input_context ELSE #{inputContext} END,
+            output_context = CASE WHEN #{outputContext} IS NULL THEN output_context ELSE #{outputContext} END,
+            prev_execution_msg = CASE WHEN execution_msg IS NULL OR prev_execution_msg = execution_msg THEN prev_execution_msg ELSE execution_msg END,
+            execution_msg = CASE WHEN #{executionMsg} IS NULL THEN execution_msg ELSE #{executionMsg} END,
+            signal_biz_code = CASE WHEN #{signalBizCode} IS NULL THEN signal_biz_code ELSE #{signalBizCode} END,
+            retry_count = CASE WHEN #{retryCount} IS NULL THEN retry_count ELSE #{retryCount} END
+        WHERE id = #{id}
+          AND state IN
+            <foreach collection="activityStatesCondition" item="state" open="(" separator="," close=")">
+                #{state}
+            </foreach>
+    </update>
+
+    <update id="updateByWorkflowInstanceId">
+        UPDATE activity_instance
+        SET prev_state = state,
+            state = #{expectedActivityState}
+        WHERE workflow_instance_id = #{workflowInstanceId}
+          AND state IN
+            <foreach collection="activityStatesCondition" item="state" open="(" separator="," close=")">
+                #{state}
+            </foreach>
+    </update>
+
+    <update id="appendExecutionMsg">
+        UPDATE activity_instance
+        SET execution_msg = CONCAT(COALESCE(execution_msg, ''), #{executionMsg})
+        WHERE id = #{id}
+    </update>
+
+</mapper>

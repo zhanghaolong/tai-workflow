@@ -1,0 +1,32 @@
+/target/
+!.mvn/wrapper/maven-wrapper.jar
+
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+.DS_Store
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+
+### NetBeans ###
+/nbproject/private/
+/build/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+actuator-enhance-spring-boot-starter/target/
+apollo-starter/target/
+dynamodb-spring-boot-starter/target/
+master-election-spring-boot-starter/target/
+oauth-utils/target/
+/tai-workflow-api/target/
+/tai-workflow-repository/target/
+/tai-workflow-domain/target/

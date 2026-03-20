@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tai.workflow.repository.mapper.WorkflowNodeHeartbeatMapper">
+
+    <resultMap id="BaseResultMap" type="com.tai.workflow.repository.entity.WorkflowNodeHeartbeatEntity">
+        <id column="id" property="id"/>
+        <result column="namespace" property="namespace"/>
+        <result column="worker_node" property="workerNode"/>
+        <result column="heartbeat_time" property="heartbeatTime"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, namespace, worker_node, heartbeat_time
+    </sql>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM workflow_node_heartbeat
+        WHERE id = #{id}
+    </select>
+
+    <select id="selectByNamespaceAndWorkerNode" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM workflow_node_heartbeat
+        WHERE namespace = #{namespace} AND worker_node = #{workerNode}
+    </select>
+
+    <select id="selectByNamespaceAndHeartbeatTimeLessThanEqual" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM workflow_node_heartbeat
+        WHERE namespace = #{namespace} AND heartbeat_time &lt;= #{timeThreshold}
+    </select>
+
+    <select id="selectByNamespaceAndHeartbeatTimeGreaterThan" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM workflow_node_heartbeat
+        WHERE namespace = #{namespace} AND heartbeat_time &gt; #{timeThreshold}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO workflow_node_heartbeat (namespace, worker_node, heartbeat_time)
+        VALUES (#{namespace}, #{workerNode}, #{heartbeatTime})
+    </insert>
+
+    <update id="updateHeartbeatTime">
+        UPDATE workflow_node_heartbeat
+        SET heartbeat_time = #{heartbeatTime}
+        WHERE namespace = #{namespace} AND worker_node = #{workerNode}
+    </update>
+
+    <delete id="deleteByNamespaceAndWorkerNodeIn">
+        DELETE FROM workflow_node_heartbeat
+        WHERE namespace = #{namespace}
+          AND worker_node IN
+            <foreach collection="workerNodes" item="node" open="(" separator="," close=")">
+                #{node}
+            </foreach>
+    </delete>
+
+</mapper>
